@@ -129,65 +129,8 @@ export default function RecipeDetail() {
     <main className="mx-auto max-w-3xl px-4 py-10">
       <AppHeader />
 
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-3xl">{recipe.title}</h1>
-          {recipe.description && (
-            <p className="mt-1 text-foreground/70">{recipe.description}</p>
-          )}
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            {prepTotal > 0 && (
-              <Badge variant="neutral">⏱ {formatMinutes(prepTotal)}</Badge>
-            )}
-            {recipe.servings && (
-              <Badge variant="neutral">🍽 serves {recipe.servings}</Badge>
-            )}
-            {recipe.tags.map((tag) => (
-              <Badge key={tag}>{tag}</Badge>
-            ))}
-          </div>
-          {(recipe.sourceUrl || recipe.sourceBook) && (
-            <p className="mt-3 text-sm text-foreground/60">
-              Source:{" "}
-              {recipe.sourceUrl ? (
-                <a
-                  href={recipe.sourceUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="underline"
-                >
-                  {recipe.sourceUrl}
-                </a>
-              ) : null}
-              {recipe.sourceUrl && recipe.sourceBook ? " · " : ""}
-              {recipe.sourceBook}
-            </p>
-          )}
-        </div>
-        <div className="flex gap-2">
-          {session ? (
-            <>
-              <Button render={<Link to={`/recipes/${recipe.id}/edit`} />}>
-                Edit
-              </Button>
-              <Button
-                variant="neutral"
-                onClick={handleDelete}
-                disabled={deleting}
-              >
-                {deleting ? "Deleting…" : "Delete"}
-              </Button>
-            </>
-          ) : (
-            <p className="max-w-[16rem] text-right text-xs text-foreground/50">
-              Reading is public — sign in (top right) to edit.
-            </p>
-          )}
-        </div>
-      </div>
-
       {recipe.photos.length > 0 && (
-        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
           {recipe.photos.map((photo) => (
             <div key={photo.id} className="group relative">
               <img
@@ -232,6 +175,41 @@ export default function RecipeDetail() {
           </Button>
         </div>
       )}
+
+      <div className="mb-6">
+        <h1 className="text-3xl">{recipe.title}</h1>
+        {recipe.description && (
+          <p className="mt-1 text-foreground/70">{recipe.description}</p>
+        )}
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {prepTotal > 0 && (
+            <Badge variant="neutral">⏱ {formatMinutes(prepTotal)}</Badge>
+          )}
+          {recipe.servings && (
+            <Badge variant="neutral">🍽 serves {recipe.servings}</Badge>
+          )}
+          {recipe.tags.map((tag) => (
+            <Badge key={tag}>{tag}</Badge>
+          ))}
+        </div>
+        {(recipe.sourceUrl || recipe.sourceBook) && (
+          <p className="mt-3 text-sm text-foreground/60">
+            Source:{" "}
+            {recipe.sourceUrl ? (
+              <a
+                href={recipe.sourceUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="underline"
+              >
+                {recipe.sourceUrl}
+              </a>
+            ) : null}
+            {recipe.sourceUrl && recipe.sourceBook ? " · " : ""}
+            {recipe.sourceBook}
+          </p>
+        )}
+      </div>
 
       <div className="grid gap-6 md:grid-cols-[1fr_1.5fr]">
         <Card className="h-fit bg-secondary-background">
@@ -328,6 +306,32 @@ export default function RecipeDetail() {
           )}
         </CardContent>
       </Card>
+
+      <div className="mt-8 flex flex-wrap items-center gap-2 border-t-2 border-border pt-5">
+        {session ? (
+          <>
+            <Button
+              variant="neutral"
+              size="sm"
+              render={<Link to={`/recipes/${recipe.id}/edit`} />}
+            >
+              ✏️ Edit recipe
+            </Button>
+            <Button
+              variant="neutral"
+              size="sm"
+              onClick={handleDelete}
+              disabled={deleting}
+            >
+              {deleting ? "Deleting…" : "🗑 Delete recipe"}
+            </Button>
+          </>
+        ) : (
+          <p className="text-xs text-foreground/50">
+            Reading is public — sign in (top right) to edit.
+          </p>
+        )}
+      </div>
     </main>
   );
 }
