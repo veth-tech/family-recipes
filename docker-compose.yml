@@ -1,0 +1,17 @@
+services:
+  app:
+    build: .
+    ports:
+      # host:container — change the host side freely (3000 was taken locally)
+      - "8080:3000"
+    env_file:
+      - .env
+    environment:
+      # All mutable state lives in the mounted volume
+      DATA_DIR: /data
+      DATABASE_PATH: /data/recipes.db
+      # Container always listens on 3000 internally (overrides any local .env value)
+      PORT: 3000
+    volumes:
+      - ./data:/data
+    restart: unless-stopped
