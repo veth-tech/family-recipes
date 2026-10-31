@@ -104,7 +104,7 @@ user). Every note and recipe change is attributed automatically.
 
 ## Roadmap
 
-> **Status: M1 ✅ · M2 ✅ (recipes CRUD + fuzzy search + auth UI) · next: M3**
+> **Status: M1 ✅ · M2 ✅ · M3 ✅ (notes + photos) · next: M4**
 
 1. **M1 — Skeleton** ✅: scaffold app + server, Drizzle schema + migrations,
    better-auth wired, healthcheck, Docker build, `docker compose up` works
@@ -112,7 +112,11 @@ user). Every note and recipe change is attributed automatically.
    (MiniSearch on server for agents + client for instant UX), auth-protected API,
    login page, hybrid home (search bar + tag chips + results), create/edit/detail pages,
    seed script (`npm run seed`)
-3. **M3 — Notes + photos**: append-only notes, photo upload to `/data/photos`
+3. **M3 — Notes + photos** ✅: append-only attributed notes (`POST /api/recipes/{id}/notes`),
+   photo upload (`POST /api/recipes/{id}/photos`, multipart, 10 MB, mime whitelist),
+   public immutable photo serving (`GET /api/photos/{id}`), photo delete, home card
+   thumbnails (`primaryPhotoId`), orphan-file cleanup on recipe delete.
+   Reads public, writes authed (login = publishing).
 4. **M4 — URL import**: schema.org/Recipe parser → prefilled draft for review
 5. **M5 — Polish**: responsive/mobile tweaks, empty states, seed script for initial data
 
@@ -120,6 +124,8 @@ user). Every note and recipe change is attributed automatically.
 
 - Ingredient parsing (structured quantities, servings scaling) if ever wanted —
   parse at the read layer; freeform text stays the source of truth
+- Photo pipeline: originals stored as-is (client-side resize / `sharp` later if
+  photos get heavy)
 
 ## Ideas parking lot
 

@@ -1,8 +1,10 @@
 import type {
+  NoteDTO,
   RecipeDetailDTO,
   RecipeDTO,
   RecipeInput,
 } from "../../server/services/recipes";
+import type { PhotoDTO } from "../../server/services/photos";
 import type { SearchHit } from "../../server/services/search";
 
 export class ApiError extends Error {
@@ -17,9 +19,10 @@ export class ApiError extends Error {
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(path, {
     ...init,
-    headers: init?.body
-      ? { "Content-Type": "application/json", ...init?.headers }
-      : init?.headers,
+    headers:
+      init?.body && !(init.body instanceof FormData)
+        ? { "Content-Type": "application/json", ...init?.headers }
+        : init?.headers,
   });
   if (res.status === 401) {
     throw new ApiError("Not signed in", 401);
@@ -60,4 +63,22 @@ export const api = {
     request<{ results: SearchHit[] }>(
       `/api/search?q=${encodeURIComponent(q)}`,
     ).then((r) => r.results),
+
+  addNote: (recipeId: string, body: string) =>
+    request<NoteDTO>(`/api/recipes/${recipeId}/notes`, {
+      method: "POST",
+      body: JSON.stringify({ body }),
+    }),
+
+  uploadPhotos: (recipeId: string, files: File[]) => {
+    const form = new FormData();
+    for (const file of files) form.append("files", file);
+    return request<{ photos: PhotoDTO[]; errors: { name: string; error: string }[] }>(
+      `/api/recipes/${recipeId}/photos`,
+      { method: "POST", body: form },
+    );
+  },
+
+  deletePhoto: (photoId: string) =>
+    request<void>(`/api/photos/${photoId}`, { method: "DELETE" }),
 };

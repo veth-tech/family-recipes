@@ -6,6 +6,7 @@ import { auth } from "./auth";
 import { runMigrations } from "./db/migrate";
 import { config } from "./env";
 import { registerRecipeRoutes } from "./routes/recipes";
+import { registerMediaRoutes } from "./routes/media";
 import { refreshSearchIndex } from "./services/recipes";
 import type { AppEnv } from "./middleware";
 
@@ -51,9 +52,10 @@ app.get("/api/me", async (c) => {
   });
 });
 
-// --- Recipes + search ---------------------------------------------------------
+// --- Recipes + search + media -------------------------------------------------
 
 registerRecipeRoutes(app);
+registerMediaRoutes(app);
 
 // --- API docs ----------------------------------------------------------------
 

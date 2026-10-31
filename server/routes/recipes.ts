@@ -2,70 +2,19 @@ import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi";
 import { requireAuth, type AppEnv } from "../middleware";
 import * as recipesService from "../services/recipes";
 import { searchRecipes } from "../services/search";
-
-// ---------------------------------------------------------------------------
-// Schemas
-// ---------------------------------------------------------------------------
-
-const idParams = z
-  .object({ id: z.string().min(1) })
-  .openapi({ param: { name: "id", in: "path", required: true } });
-
-const searchQuery = z.object({
-  q: z.string().optional().openapi({
-    param: { name: "q", in: "query", description: "Fuzzy search query" },
-  }),
-});
-
-const recipeInputSchema = z.object({
-  title: z.string().min(1).max(300),
-  description: z.string().max(2000).nullable().optional(),
-  sourceUrl: z.string().url().max(2000).nullable().optional(),
-  sourceBook: z.string().max(300).nullable().optional(),
-  servings: z.number().int().positive().max(99).nullable().optional(),
-  prepMinutes: z.number().int().min(0).max(10080).nullable().optional(),
-  cookMinutes: z.number().int().min(0).max(10080).nullable().optional(),
-  ingredients: z.string().max(20000).optional(),
-  instructions: z.string().max(100000).optional(),
-  tags: z.array(z.string().min(1).max(50)).max(20).optional(),
-});
-
-const noteSchema = z.object({
-  id: z.string(),
-  userId: z.string(),
-  userName: z.string(),
-  body: z.string(),
-  createdAt: z.string(),
-});
-
-const recipeResponseSchema = z.object({
-  id: z.string(),
-  title: z.string(),
-  description: z.string().nullable(),
-  sourceUrl: z.string().nullable(),
-  sourceBook: z.string().nullable(),
-  servings: z.number().nullable(),
-  prepMinutes: z.number().nullable(),
-  cookMinutes: z.number().nullable(),
-  ingredients: z.string(),
-  instructions: z.string(),
-  tags: z.array(z.string()),
-  createdBy: z.string(),
-  createdAt: z.string(),
-  updatedAt: z.string(),
-});
-
-const recipeDetailSchema = recipeResponseSchema.extend({
-  notes: z.array(noteSchema),
-});
-
-const recipeResponseContent = {
-  "application/json": { schema: recipeResponseSchema },
-} as const;
+import {
+  idParams,
+  recipeDetailSchema,
+  recipeInputSchema,
+  recipeResponseContent,
+  recipeResponseSchema,
+  searchQuery,
+} from "./schemas";
 
 // ---------------------------------------------------------------------------
 // Routes — registered on the main app so /doc picks them all up.
 // NOTE: /recipes/tags must be registered before /recipes/{id}.
+// Reads are public; writes require auth (login is "just for publishing").
 // ---------------------------------------------------------------------------
 
 export function registerRecipeRoutes(app: OpenAPIHono<AppEnv>): void {

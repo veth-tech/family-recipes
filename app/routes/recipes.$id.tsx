@@ -1,11 +1,12 @@
 import { marked } from "marked";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 
 import { AppHeader } from "@/components/app-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
 import type { RecipeDetailDTO } from "../../server/services/recipes";
@@ -24,13 +25,22 @@ export default function RecipeDetail() {
   const [recipe, setRecipe] = useState<RecipeDetailDTO | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [noteText, setNoteText] = useState("");
+  const [noteBusy, setNoteBusy] = useState(false);
+  const [photoBusy, setPhotoBusy] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
+  function load() {
     if (!id) return;
     api
       .getRecipe(id)
       .then(setRecipe)
       .catch((err) => setError(err.message));
+  }
+
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   async function handleDelete() {
@@ -42,6 +52,50 @@ export default function RecipeDetail() {
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
       setDeleting(false);
+    }
+  }
+
+  async function handleAddNote(event: React.FormEvent) {
+    event.preventDefault();
+    if (!id || !noteText.trim()) return;
+    setNoteBusy(true);
+    try {
+      await api.addNote(id, noteText.trim());
+      setNoteText("");
+      load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setNoteBusy(false);
+    }
+  }
+
+  async function handlePhotoUpload(files: FileList | null) {
+    if (!id || !files || files.length === 0) return;
+    setPhotoBusy(true);
+    try {
+      const result = await api.uploadPhotos(id, Array.from(files));
+      if (result.errors.length > 0) {
+        setError(
+          `Some photos failed: ${result.errors.map((e) => `${e.name} (${e.error})`).join(", ")}`,
+        );
+      }
+      load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setPhotoBusy(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
+  async function handleDeletePhoto(photoId: string) {
+    if (!window.confirm("Remove this photo?")) return;
+    try {
+      await api.deletePhoto(photoId);
+      load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
     }
   }
 
@@ -132,6 +186,53 @@ export default function RecipeDetail() {
         </div>
       </div>
 
+      {recipe.photos.length > 0 && (
+        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {recipe.photos.map((photo) => (
+            <div key={photo.id} className="group relative">
+              <img
+                src={photo.url}
+                alt=""
+                loading="lazy"
+                className="aspect-[4/3] w-full rounded-base border-2 border-border object-cover"
+              />
+              {session && (
+                <Button
+                  size="icon-xs"
+                  variant="neutral"
+                  className="absolute right-1.5 top-1.5 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+                  onClick={() => handleDeletePhoto(photo.id)}
+                  title="Remove photo"
+                >
+                  ✕
+                </Button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {session && (
+        <div className="mb-6">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
+            multiple
+            hidden
+            onChange={(event) => handlePhotoUpload(event.target.files)}
+          />
+          <Button
+            variant="neutral"
+            size="sm"
+            disabled={photoBusy}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            {photoBusy ? "Uploading…" : "📷 Add photos"}
+          </Button>
+        </div>
+      )}
+
       <div className="grid gap-6 md:grid-cols-[1fr_1.5fr]">
         <Card className="h-fit bg-secondary-background">
           <CardHeader>
@@ -176,10 +277,30 @@ export default function RecipeDetail() {
         <CardHeader>
           <CardTitle>Notes</CardTitle>
           <p className="text-sm text-foreground/50">
-            Tasting notes &amp; mods — composer arriving in M3
+            Tasting notes &amp; mods — append-only, they never disappear.
           </p>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex flex-col gap-4">
+          {session ? (
+            <form onSubmit={handleAddNote} className="flex flex-col gap-2">
+              <Textarea
+                value={noteText}
+                onChange={(event) => setNoteText(event.target.value)}
+                rows={3}
+                placeholder="Doubled the garlic. Next time: less chili…"
+              />
+              <div>
+                <Button type="submit" size="sm" disabled={noteBusy || !noteText.trim()}>
+                  {noteBusy ? "Adding…" : "Add note"}
+                </Button>
+              </div>
+            </form>
+          ) : (
+            <p className="text-sm text-foreground/50">
+              Sign in (top right) to leave a note.
+            </p>
+          )}
+
           {recipe.notes.length > 0 ? (
             <ul className="flex flex-col gap-3">
               {recipe.notes.map((note) => (
@@ -188,14 +309,22 @@ export default function RecipeDetail() {
                   className="rounded-base border-2 border-border p-3"
                 >
                   <p className="text-xs text-foreground/60">
-                    {note.userName} · {note.createdAt.slice(0, 10)}
+                    <span className="font-heading">{note.userName}</span> ·{" "}
+                    {note.createdAt.slice(0, 10)}
                   </p>
-                  <p className="mt-1">{note.body}</p>
+                  <div
+                    className="mt-1 [&_li]:ml-4 [&_li]:list-disc [&_p]:my-1 first:[&_p]:mt-0"
+                    dangerouslySetInnerHTML={{
+                      __html: marked.parse(note.body, { async: false }) as string,
+                    }}
+                  />
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-foreground/50">No notes yet.</p>
+            !session && (
+              <p className="text-sm text-foreground/50">No notes yet.</p>
+            )
           )}
         </CardContent>
       </Card>

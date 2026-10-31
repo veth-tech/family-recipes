@@ -17,6 +17,14 @@ export function RecipeCard({ recipe }: { recipe: RecipeDTO }) {
         size="sm"
         className="bg-secondary-background transition-transform hover:-translate-y-1"
       >
+        {recipe.primaryPhotoId && (
+          <img
+            src={`/api/photos/${recipe.primaryPhotoId}`}
+            alt=""
+            loading="lazy"
+            className="-mx-2 -mt-2 aspect-[16/9] w-[calc(100%+1rem)] rounded-t-base border-b-2 border-border object-cover"
+          />
+        )}
         <CardHeader>
           <CardTitle>{recipe.title}</CardTitle>
           {recipe.description && (
