@@ -104,7 +104,7 @@ user). Every note and recipe change is attributed automatically.
 
 ## Roadmap
 
-> **Status: M1 ✅ · M2 ✅ · M3 ✅ (notes + photos) · next: M4**
+> **Status: M1 ✅ · M2 ✅ · M3 ✅ · M4 ✅ (URL import) · next: M5**
 
 1. **M1 — Skeleton** ✅: scaffold app + server, Drizzle schema + migrations,
    better-auth wired, healthcheck, Docker build, `docker compose up` works
@@ -117,7 +117,13 @@ user). Every note and recipe change is attributed automatically.
    public immutable photo serving (`GET /api/photos/{id}`), photo delete, home card
    thumbnails (`primaryPhotoId`), orphan-file cleanup on recipe delete.
    Reads public, writes authed (login = publishing).
-4. **M4 — URL import**: schema.org/Recipe parser → prefilled draft for review
+4. **M4 — URL import** ✅: `POST /api/import/url` parses schema.org Recipe
+   JSON-LD (title, description, times, servings, ingredients, markdown
+   instructions, tags from keywords/category/cuisine, image URL) into a
+   review-only draft; client prefills the create form; photo auto-downloads
+   server-side after saving (`POST /api/recipes/{id}/photos/from-url`).
+   Sites with aggressive bot protection (e.g. Cloudflare) return a friendly
+   "copy it manually" error.
 5. **M5 — Polish**: responsive/mobile tweaks, empty states, seed script for initial data
 
 ## Open questions

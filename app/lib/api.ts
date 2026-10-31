@@ -1,3 +1,4 @@
+import type { RecipeDraft } from "../../server/services/import";
 import type {
   NoteDTO,
   RecipeDetailDTO,
@@ -66,6 +67,18 @@ export const api = {
 
   tags: () =>
     request<{ tags: string[] }>("/api/recipes/tags").then((r) => r.tags),
+
+  importFromUrl: (url: string) =>
+    request<RecipeDraft>("/api/import/url", {
+      method: "POST",
+      body: JSON.stringify({ url }),
+    }),
+
+  addPhotoFromUrl: (recipeId: string, url: string) =>
+    request<PhotoDTO>(`/api/recipes/${recipeId}/photos/from-url`, {
+      method: "POST",
+      body: JSON.stringify({ url }),
+    }),
 
   addNote: (recipeId: string, body: string) =>
     request<NoteDTO>(`/api/recipes/${recipeId}/notes`, {

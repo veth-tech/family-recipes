@@ -5,6 +5,11 @@ import { db } from "../db/client";
 import { photos } from "../db/schema";
 import { config } from "../env";
 
+import { assertPublicHttpUrl } from "./import";
+
+const USER_AGENT =
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0 Safari/537.36";
+
 export type PhotoDTO = { id: string; url: string; createdAt: string };
 
 const MIME_EXT: Record<string, string> = {
@@ -46,17 +51,50 @@ export async function addPhoto(
   recipeId: string,
   file: File,
 ): Promise<PhotoDTO | { error: string }> {
-  const ext = MIME_EXT[file.type];
-  if (!ext) {
-    return { error: `Unsupported image type: ${file.type || "unknown"}` };
+  const buffer = Buffer.from(await file.arrayBuffer());
+  return savePhotoBuffer(recipeId, buffer, file.type);
+}
+
+/** Download an image from a URL (server-side, avoids CORS) and save it. */
+export async function addPhotoFromUrl(
+  recipeId: string,
+  urlString: string,
+): Promise<PhotoDTO | { error: string }> {
+  try {
+    const url = assertPublicHttpUrl(urlString);
+    const res = await fetch(url, {
+      headers: { "User-Agent": USER_AGENT },
+      redirect: "follow",
+      signal: AbortSignal.timeout(20_000),
+    });
+    if (!res.ok) {
+      return { error: `Image host responded with ${res.status}` };
+    }
+    const mime = (res.headers.get("content-type") ?? "").split(";")[0].trim();
+    const buffer = Buffer.from(await res.arrayBuffer());
+    return savePhotoBuffer(recipeId, buffer, mime);
+  } catch (err) {
+    return {
+      error: err instanceof Error ? err.message : "Image download failed",
+    };
   }
-  if (file.size > MAX_PHOTO_BYTES) {
+}
+
+async function savePhotoBuffer(
+  recipeId: string,
+  buffer: Buffer,
+  mime: string,
+): Promise<PhotoDTO | { error: string }> {
+  const ext = MIME_EXT[mime];
+  if (!ext) {
+    return { error: `Unsupported image type: ${mime || "unknown"}` };
+  }
+  if (buffer.length > MAX_PHOTO_BYTES) {
     return { error: `Image too large (max ${MAX_PHOTO_BYTES / 1024 / 1024} MB)` };
   }
 
   const id = crypto.randomUUID();
   const filename = `${id}.${ext}`;
-  const buffer = Buffer.from(await file.arrayBuffer());
   await fs.mkdir(path.join(photosDir(), recipeId), { recursive: true });
   await fs.writeFile(photoFilePath(recipeId, filename), buffer);
 

@@ -7,6 +7,7 @@ import { runMigrations } from "./db/migrate";
 import { config } from "./env";
 import { registerRecipeRoutes } from "./routes/recipes";
 import { registerMediaRoutes } from "./routes/media";
+import { registerImportRoutes } from "./routes/import";
 import { refreshSearchIndex } from "./services/recipes";
 import type { AppEnv } from "./middleware";
 
@@ -56,6 +57,7 @@ app.get("/api/me", async (c) => {
 
 registerRecipeRoutes(app);
 registerMediaRoutes(app);
+registerImportRoutes(app);
 
 // --- API docs ----------------------------------------------------------------
 
