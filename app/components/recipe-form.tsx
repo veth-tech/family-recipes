@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { api } from "@/lib/api";
 import type { RecipeInput } from "../../server/services/recipes";
 
 type Props = {
@@ -32,8 +33,29 @@ export function RecipeForm({ initial, submitLabel, onSubmit, onCancel }: Props) 
   const [ingredients, setIngredients] = useState(initial?.ingredients ?? "");
   const [instructions, setInstructions] = useState(initial?.instructions ?? "");
   const [tagText, setTagText] = useState((initial?.tags ?? []).join(", "));
+  const [allTags, setAllTags] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+
+  // Existing tags across the library — clickable chips under the input
+  useEffect(() => {
+    api
+      .tags()
+      .then(setAllTags)
+      .catch(() => {}); // non-fatal: typing tags manually always works
+  }, []);
+
+  const tags = tagText
+    .split(",")
+    .map((tag) => tag.trim().toLowerCase())
+    .filter(Boolean);
+
+  function toggleTag(tag: string) {
+    const next = tags.includes(tag)
+      ? tags.filter((t) => t !== tag)
+      : [...tags, tag];
+    setTagText(next.join(", "));
+  }
 
   const numberOrNull = (value: string) =>
     value.trim() === "" ? null : Number(value);
@@ -49,10 +71,7 @@ export function RecipeForm({ initial, submitLabel, onSubmit, onCancel }: Props) 
       cookMinutes: numberOrNull(cookMinutes),
       ingredients,
       instructions,
-      tags: tagText
-        .split(",")
-        .map((tag) => tag.trim().toLowerCase())
-        .filter(Boolean),
+      tags,
     };
   }
 
@@ -159,6 +178,23 @@ export function RecipeForm({ initial, submitLabel, onSubmit, onCancel }: Props) 
           placeholder="quick weeknight, pasta, 30 minutes"
         />
       </Field>
+
+      {allTags.length > 0 && (
+        <div className="-mt-2 flex flex-wrap gap-2">
+          {allTags.map((tag) => (
+            <Button
+              key={tag}
+              type="button"
+              size="xs"
+              variant={tags.includes(tag) ? "default" : "neutral"}
+              onClick={() => toggleTag(tag)}
+              title={tags.includes(tag) ? "Remove tag" : "Add tag"}
+            >
+              {tag}
+            </Button>
+          ))}
+        </div>
+      )}
 
       {error && <p className="font-base text-[#FF4D50]">⚠️ {error}</p>}
 

@@ -64,6 +64,9 @@ export const api = {
       `/api/search?q=${encodeURIComponent(q)}`,
     ).then((r) => r.results),
 
+  tags: () =>
+    request<{ tags: string[] }>("/api/recipes/tags").then((r) => r.tags),
+
   addNote: (recipeId: string, body: string) =>
     request<NoteDTO>(`/api/recipes/${recipeId}/notes`, {
       method: "POST",
