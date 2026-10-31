@@ -20,6 +20,12 @@ export const config = {
     : path.join(dataDir, "recipes.db"),
   isProd: process.env.NODE_ENV === "production",
   appUrl: process.env.BETTER_AUTH_URL ?? "http://localhost:5173",
+  // Registration is invite-only: only these emails may create accounts
+  // (via an authenticated session), plus the create-user CLI script.
+  adminEmails: (process.env.ADMIN_EMAILS ?? "seed@family.recipes")
+    .split(",")
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean),
   secrets: {
     auth: required("BETTER_AUTH_SECRET"),
   },

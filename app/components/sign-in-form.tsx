@@ -5,12 +5,10 @@ import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";
 
 /**
- * Email/password sign-in form with a sign-up toggle. Used in the header
- * dropdown and anywhere an inline "sign in to publish" prompt is needed.
+ * Sign-in form. Registration is invite-only, so there is no sign-up mode —
+ * the owner creates accounts via `npm run create-user` or the admin API.
  */
 export function SignInForm({ onSuccess }: { onSuccess?: () => void }) {
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
-  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -21,14 +19,7 @@ export function SignInForm({ onSuccess }: { onSuccess?: () => void }) {
     setError(null);
     setBusy(true);
     try {
-      const result =
-        mode === "signin"
-          ? await authClient.signIn.email({ email, password })
-          : await authClient.signUp.email({
-              email,
-              password,
-              name: name.trim() || email.split("@")[0],
-            });
+      const result = await authClient.signIn.email({ email, password });
       if (result.error) {
         setError(result.error.message ?? "Something went wrong");
       } else {
@@ -41,18 +32,6 @@ export function SignInForm({ onSuccess }: { onSuccess?: () => void }) {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-      {mode === "signup" && (
-        <label className="flex flex-col gap-1">
-          <span className="text-xs font-heading">Name</span>
-          <Input
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            placeholder="Brandon"
-            autoComplete="name"
-            className="h-9"
-          />
-        </label>
-      )}
       <label className="flex flex-col gap-1">
         <span className="text-xs font-heading">Email</span>
         <Input
@@ -72,8 +51,7 @@ export function SignInForm({ onSuccess }: { onSuccess?: () => void }) {
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           placeholder="••••••••"
-          autoComplete={mode === "signin" ? "current-password" : "new-password"}
-          minLength={8}
+          autoComplete="current-password"
           required
           className="h-9"
         />
@@ -84,21 +62,12 @@ export function SignInForm({ onSuccess }: { onSuccess?: () => void }) {
       )}
 
       <Button type="submit" size="sm" disabled={busy}>
-        {busy ? "…" : mode === "signin" ? "Sign in" : "Create account"}
+        {busy ? "…" : "Sign in"}
       </Button>
 
-      <button
-        type="button"
-        onClick={() => {
-          setMode(mode === "signin" ? "signup" : "signin");
-          setError(null);
-        }}
-        className="text-center text-xs text-foreground/60 underline"
-      >
-        {mode === "signin"
-          ? "No account yet? Create one"
-          : "Already have an account? Sign in"}
-      </button>
+      <p className="text-center text-xs text-foreground/50">
+        Accounts are invite-only — ask the site owner.
+      </p>
     </form>
   );
 }

@@ -11,6 +11,11 @@ import "./global.css";
 
 export const links: LinksFunction = () => [
   {
+    rel: "icon",
+    type: "image/svg+xml",
+    href: "/favicon.svg",
+  },
+  {
     rel: "preconnect",
     href: "https://fonts.googleapis.com",
   },
@@ -31,11 +36,22 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        {/* Private site — keep it out of search engines */}
+        <meta name="robots" content="noindex, nofollow" />
         <Meta />
         <Links />
       </head>
       <body>
         {children}
+        <footer className="mt-12 border-t-2 border-border px-4 py-6 text-center text-xs text-foreground/60">
+          <p>
+            Made in Montana with <span aria-label="love">❤️</span>
+          </p>
+          <p className="mt-1">
+            A private recipe library for our friends &amp; family — not a
+            public site.
+          </p>
+        </footer>
         <ScrollRestoration />
         <Scripts />
       </body>

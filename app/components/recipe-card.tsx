@@ -35,7 +35,7 @@ export function RecipeCard({ recipe }: { recipe: RecipeDTO }) {
           <CardContent className="flex flex-wrap gap-1.5">
             {totalMinutes > 0 && <Badge variant="neutral">⏱ {totalMinutes} min</Badge>}
             {recipe.servings && (
-              <Badge variant="neutral">🍽 serves {recipe.servings}</Badge>
+              <Badge variant="neutral">Serves {recipe.servings}</Badge>
             )}
             {recipe.tags.slice(0, 3).map((tag) => (
               <Badge key={tag}>{tag}</Badge>

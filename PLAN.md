@@ -137,5 +137,20 @@ user). Every note and recipe change is attributed automatically.
 
 - Brandon had a second idea while reviewing M2… and forgot it. It lives now in
   this section until it comes back. 🧠
+
+## Polish batch (post-M4)
+
+- [x] Favicon — neobrutalist 🍳 SVG (`public/favicon.svg`)
+- [x] Invite-only registration — public sign-up blocked in better-auth
+      (admin-session emails via `ADMIN_EMAILS`, default: seeded account);
+      accounts created via `npm run create-user -- <email> <name> <password>`
+      or the admin API; sign-up toggle removed from the UI
+- [x] Site footer — "Made in Montana with ❤️" + friends-&-family-only notice
+- [x] Fixed broken 🍽 emoji on servings badges (plain "Serves" text)
+- [x] Bot/scraper deterrents — robots.txt (Disallow all), noindex/nofollow
+      meta, X-Robots-Tag header
+- [x] AI agent onboarding — `GET /api/ai-guide` (markdown: auth flow,
+      endpoints, content conventions), linked from the OpenAPI doc description
+      so agents discover it from `/doc` alone
 - Whether notes support markdown (lean yes, rendered in UI)
 - Photo pipeline: client-side resize before upload vs. server-side sharp

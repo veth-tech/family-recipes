@@ -186,7 +186,7 @@ export default function RecipeDetail() {
             <Badge variant="neutral">⏱ {formatMinutes(prepTotal)}</Badge>
           )}
           {recipe.servings && (
-            <Badge variant="neutral">🍽 serves {recipe.servings}</Badge>
+            <Badge variant="neutral">Serves {recipe.servings}</Badge>
           )}
           {recipe.tags.map((tag) => (
             <Badge key={tag}>{tag}</Badge>

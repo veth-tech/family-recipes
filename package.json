@@ -12,7 +12,8 @@
     "start": "node --env-file-if-exists=.env build/server/index.mjs",
     "typecheck": "tsc",
     "db:generate": "drizzle-kit generate",
-    "seed": "node --env-file=.env --import tsx scripts/seed.ts"
+    "seed": "node --env-file=.env --import tsx scripts/seed.ts",
+    "create-user": "node --env-file=.env --import tsx scripts/create-user.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",

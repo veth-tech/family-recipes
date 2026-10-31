@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
-import { auth } from "../server/auth";
 import { db } from "../server/db/client";
 import { user } from "../server/db/schema";
+import { createUserDirect } from "../server/services/users";
 import * as recipesService from "../server/services/recipes";
 
 const SEED_EMAIL = "seed@family.recipes";
@@ -12,18 +12,13 @@ async function ensureSeedUser(): Promise<string> {
     .from(user)
     .where(eq(user.email, SEED_EMAIL));
   if (existing) return existing.id;
-  await auth.api.signUpEmail({
-    body: {
-      name: "Seed",
-      email: SEED_EMAIL,
-      password: "seed-user-no-login-8f2",
-    },
-  });
-  const [created] = await db
-    .select()
-    .from(user)
-    .where(eq(user.email, SEED_EMAIL));
-  return created.id;
+  const result = await createUserDirect(
+    SEED_EMAIL,
+    "Seed",
+    "seed-user-no-login-8f2",
+  );
+  if ("error" in result) throw new Error(result.error);
+  return result.id;
 }
 
 const sampleRecipes: recipesService.RecipeInput[] = [
