@@ -120,5 +120,10 @@ user). Every note and recipe change is attributed automatically.
 
 - Ingredient parsing (structured quantities, servings scaling) if ever wanted —
   parse at the read layer; freeform text stays the source of truth
+
+## Ideas parking lot
+
+- Brandon had a second idea while reviewing M2… and forgot it. It lives now in
+  this section until it comes back. 🧠
 - Whether notes support markdown (lean yes, rendered in UI)
 - Photo pipeline: client-side resize before upload vs. server-side sharp

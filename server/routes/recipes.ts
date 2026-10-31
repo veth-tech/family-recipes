@@ -74,7 +74,6 @@ export function registerRecipeRoutes(app: OpenAPIHono<AppEnv>): void {
       method: "get",
       path: "/api/recipes",
       tags: ["Recipes"],
-      middleware: [requireAuth],
       responses: {
         200: {
           content: {
@@ -95,7 +94,6 @@ export function registerRecipeRoutes(app: OpenAPIHono<AppEnv>): void {
       method: "get",
       path: "/api/recipes/tags",
       tags: ["Recipes"],
-      middleware: [requireAuth],
       responses: {
         200: {
           content: {
@@ -134,7 +132,6 @@ export function registerRecipeRoutes(app: OpenAPIHono<AppEnv>): void {
       method: "get",
       path: "/api/recipes/{id}",
       tags: ["Recipes"],
-      middleware: [requireAuth],
       request: { params: idParams },
       responses: {
         200: {
@@ -201,7 +198,6 @@ export function registerRecipeRoutes(app: OpenAPIHono<AppEnv>): void {
       method: "get",
       path: "/api/search",
       tags: ["Search"],
-      middleware: [requireAuth],
       request: { query: searchQuery },
       responses: {
         200: {

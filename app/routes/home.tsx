@@ -1,6 +1,6 @@
 import MiniSearch from "minisearch";
 import { useEffect, useMemo, useState } from "react";
-import { Link, Navigate } from "react-router";
+import { Link } from "react-router";
 
 import { RecipeCard } from "@/components/recipe-card";
 import { AppHeader } from "@/components/app-header";
@@ -8,25 +8,21 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api";
-import { useSession } from "@/lib/auth-client";
 import type { RecipeDTO } from "../../server/services/recipes";
 
 export default function Home() {
-  const { data: session, isPending } = useSession();
   const [recipes, setRecipes] = useState<RecipeDTO[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [activeTags, setActiveTags] = useState<string[]>([]);
 
-  const authed = !isPending && !!session;
-
+  // The library is public — browsing and searching need no account.
   useEffect(() => {
-    if (!authed) return;
     api
       .listRecipes()
       .then(setRecipes)
       .catch((err) => setError(err.message));
-  }, [authed]);
+  }, []);
 
   const tags = useMemo(
     () => [...new Set((recipes ?? []).flatMap((r) => r.tags))].sort(),
@@ -66,18 +62,6 @@ export default function Home() {
         ? current.filter((t) => t !== tag)
         : [...current, tag],
     );
-  }
-
-  if (isPending) {
-    return (
-      <main className="mx-auto max-w-4xl px-4 py-16">
-        <p>Checking session…</p>
-      </main>
-    );
-  }
-
-  if (!session) {
-    return <Navigate to="/login" replace />;
   }
 
   return (

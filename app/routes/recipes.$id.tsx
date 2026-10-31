@@ -1,6 +1,6 @@
 import { marked } from "marked";
 import { useEffect, useState } from "react";
-import { Link, Navigate, useNavigate, useParams } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
 
 import { AppHeader } from "@/components/app-header";
 import { Badge } from "@/components/ui/badge";
@@ -20,18 +20,18 @@ function formatMinutes(minutes: number): string {
 export default function RecipeDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { data: session, isPending } = useSession();
+  const { data: session } = useSession();
   const [recipe, setRecipe] = useState<RecipeDetailDTO | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    if (!session || !id) return;
+    if (!id) return;
     api
       .getRecipe(id)
       .then(setRecipe)
       .catch((err) => setError(err.message));
-  }, [session, id]);
+  }, [id]);
 
   async function handleDelete() {
     if (!id || !window.confirm("Delete this recipe for good?")) return;
@@ -43,17 +43,6 @@ export default function RecipeDetail() {
       setError(err instanceof Error ? err.message : String(err));
       setDeleting(false);
     }
-  }
-
-  if (isPending) {
-    return (
-      <main className="mx-auto max-w-3xl px-4 py-16">
-        <p>Checking session…</p>
-      </main>
-    );
-  }
-  if (!session) {
-    return <Navigate to="/login" replace />;
   }
 
   if (error) {
@@ -122,12 +111,24 @@ export default function RecipeDetail() {
           )}
         </div>
         <div className="flex gap-2">
-          <Button render={<Link to={`/recipes/${recipe.id}/edit`} />}>
-            Edit
-          </Button>
-          <Button variant="neutral" onClick={handleDelete} disabled={deleting}>
-            {deleting ? "Deleting…" : "Delete"}
-          </Button>
+          {session ? (
+            <>
+              <Button render={<Link to={`/recipes/${recipe.id}/edit`} />}>
+                Edit
+              </Button>
+              <Button
+                variant="neutral"
+                onClick={handleDelete}
+                disabled={deleting}
+              >
+                {deleting ? "Deleting…" : "Delete"}
+              </Button>
+            </>
+          ) : (
+            <p className="max-w-[16rem] text-right text-xs text-foreground/50">
+              Reading is public — sign in (top right) to edit.
+            </p>
+          )}
         </div>
       </div>
 

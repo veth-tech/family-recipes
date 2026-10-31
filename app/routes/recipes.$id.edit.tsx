@@ -1,8 +1,16 @@
 import { useEffect, useState } from "react";
-import { Navigate, useNavigate, useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 
 import { AppHeader } from "@/components/app-header";
 import { RecipeForm } from "@/components/recipe-form";
+import { SignInForm } from "@/components/sign-in-form";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { api } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
 import type { RecipeDetailDTO } from "../../server/services/recipes";
@@ -15,12 +23,12 @@ export default function EditRecipe() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!session || !id) return;
+    if (!id) return;
     api
       .getRecipe(id)
       .then(setRecipe)
       .catch((err) => setError(err.message));
-  }, [session, id]);
+  }, [id]);
 
   if (isPending) {
     return (
@@ -29,8 +37,24 @@ export default function EditRecipe() {
       </main>
     );
   }
+
   if (!session) {
-    return <Navigate to="/login" replace />;
+    return (
+      <main className="mx-auto max-w-md px-4 py-16">
+        <AppHeader />
+        <Card className="bg-secondary-background">
+          <CardHeader>
+            <CardTitle>Sign in to edit</CardTitle>
+            <CardDescription>
+              Reading is public — publishing is just for the two of us.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <SignInForm />
+          </CardContent>
+        </Card>
+      </main>
+    );
   }
 
   if (error) {

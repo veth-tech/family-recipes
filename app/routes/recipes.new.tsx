@@ -1,7 +1,15 @@
-import { Navigate, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 
 import { RecipeForm } from "@/components/recipe-form";
 import { AppHeader } from "@/components/app-header";
+import { SignInForm } from "@/components/sign-in-form";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { api } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
 
@@ -16,8 +24,24 @@ export default function NewRecipe() {
       </main>
     );
   }
+
   if (!session) {
-    return <Navigate to="/login" replace />;
+    return (
+      <main className="mx-auto max-w-md px-4 py-16">
+        <AppHeader />
+        <Card className="bg-secondary-background">
+          <CardHeader>
+            <CardTitle>Sign in to add recipes</CardTitle>
+            <CardDescription>
+              Reading is public — publishing is just for the two of us.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <SignInForm />
+          </CardContent>
+        </Card>
+      </main>
+    );
   }
 
   return (
