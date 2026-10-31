@@ -104,10 +104,14 @@ user). Every note and recipe change is attributed automatically.
 
 ## Roadmap
 
-1. **M1 — Skeleton**: scaffold app + server, Drizzle schema + migrations,
+> **Status: M1 ✅ · M2 ✅ (recipes CRUD + fuzzy search + auth UI) · next: M3**
+
+1. **M1 — Skeleton** ✅: scaffold app + server, Drizzle schema + migrations,
    better-auth wired, healthcheck, Docker build, `docker compose up` works
-2. **M2 — Core CRUD + search**: recipes/ingredients/tags endpoints, fuzzy search,
-   React UI (list, detail, create/edit forms)
+2. **M2 — Core CRUD + search** ✅: recipes/ingredients/tags endpoints, fuzzy search
+   (MiniSearch on server for agents + client for instant UX), auth-protected API,
+   login page, hybrid home (search bar + tag chips + results), create/edit/detail pages,
+   seed script (`npm run seed`)
 3. **M3 — Notes + photos**: append-only notes, photo upload to `/data/photos`
 4. **M4 — URL import**: schema.org/Recipe parser → prefilled draft for review
 5. **M5 — Polish**: responsive/mobile tweaks, empty states, seed script for initial data

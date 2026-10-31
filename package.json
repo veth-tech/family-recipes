@@ -11,7 +11,8 @@
     "build:server": "esbuild server/index.ts --bundle --platform=node --format=esm --outfile=build/server/index.mjs --packages=external",
     "start": "node --env-file-if-exists=.env build/server/index.mjs",
     "typecheck": "tsc",
-    "db:generate": "drizzle-kit generate"
+    "db:generate": "drizzle-kit generate",
+    "seed": "node --env-file=.env --import tsx scripts/seed.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
@@ -29,6 +30,8 @@
     "hono": "^4.9.0",
     "isbot": "^5",
     "lucide-react": "^1.66.0",
+    "marked": "^18.1.2",
+    "minisearch": "^7.2.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router": "^7.9.0",

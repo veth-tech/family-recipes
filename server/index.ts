@@ -5,10 +5,20 @@ import { OpenAPIHono } from "@hono/zod-openapi";
 import { auth } from "./auth";
 import { runMigrations } from "./db/migrate";
 import { config } from "./env";
+import { registerRecipeRoutes } from "./routes/recipes";
+import { refreshSearchIndex } from "./services/recipes";
+import type { AppEnv } from "./middleware";
 
 runMigrations();
+await refreshSearchIndex();
+console.log("[db] search index ready");
 
-const app = new OpenAPIHono();
+const app = new OpenAPIHono<AppEnv>();
+
+app.onError((err, c) => {
+  console.error("[server] unhandled error:", err);
+  return c.json({ error: "Internal server error" }, 500);
+});
 
 // --- Health -----------------------------------------------------------------
 
@@ -41,13 +51,17 @@ app.get("/api/me", async (c) => {
   });
 });
 
+// --- Recipes + search ---------------------------------------------------------
+
+registerRecipeRoutes(app);
+
 // --- API docs ----------------------------------------------------------------
 
 app.doc("/doc", {
   openapi: "3.0.0",
   info: {
     title: "Family Recipes API",
-    version: "0.1.0",
+    version: "0.2.0",
     description: "Private recipe library API for our AI assistants too.",
   },
 });
