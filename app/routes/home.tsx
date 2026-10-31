@@ -145,8 +145,9 @@ export default function Home() {
         </>
       )}
 
-      <p className="mt-10 text-center text-xs text-foreground/40">
-        <Badge variant="neutral">M2</Badge> notes &amp; photos arrive in M3
+      <p className="mt-10 text-center text-xs text-foreground/60">
+        <Badge variant="neutral">M3</Badge> notes &amp; photos are live — next
+        up: import recipes straight from a URL
       </p>
     </main>
   );
