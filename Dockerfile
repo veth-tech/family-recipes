@@ -20,6 +20,8 @@ COPY --from=build /app/build ./build
 COPY --from=build /app/server/db/migrations ./server/db/migrations
 
 EXPOSE 3000
-VOLUME /data
+
+# NOTE: no `VOLUME` directive — Railway manages the /data volume externally
+# (attached in the Railway dashboard/CLI); Docker VOLUME is rejected there.
 
 CMD ["node", "build/server/index.mjs"]
