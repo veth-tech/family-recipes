@@ -1,7 +1,11 @@
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi";
 import { requireAuth, type AppEnv } from "../middleware";
 import { ImportError, importRecipeFromUrl } from "../services/import";
-import { extractRecipeFromPhoto, greenPtConfigured } from "../services/extract";
+import {
+  extractRecipeFromPhoto,
+  extractRecipeFromText,
+  greenPtConfigured,
+} from "../services/extract";
 import { MAX_PHOTO_BYTES } from "../services/photos";
 import * as photosService from "../services/photos";
 import { idParams } from "./schemas";
@@ -120,6 +124,51 @@ export function registerImportRoutes(app: OpenAPIHono<AppEnv>): void {
       } catch (err) {
         const message =
           err instanceof ImportError ? err.message : "Couldn't read that photo";
+        return c.json({ error: message }, 400);
+      }
+    },
+  );
+
+  // Paste-the-page-text import: same AI path as the photo/text fallback, for
+  // sites that block the backend's fetch.
+  const importTextSchema = z.object({
+    text: z.string().min(1).max(50_000),
+  });
+
+  app.openapi(
+    createRoute({
+      method: "post",
+      path: "/api/import/text",
+      tags: ["Import"],
+      middleware: [requireAuth],
+      request: {
+        body: {
+          content: { "application/json": { schema: importTextSchema } },
+          required: true,
+        },
+      },
+      responses: {
+        200: {
+          content: { "application/json": { schema: recipeDraftSchema } },
+          description: "Recipe draft (never saved — client shows it for review)",
+        },
+        400: { description: "Not a recipe / model or config error" },
+      },
+    }),
+    async (c) => {
+      if (!greenPtConfigured()) {
+        return c.json(
+          { error: "Text import isn't configured — set GREENPT_API_KEY, GREENPT_BASE_URL and GREENPT_MODEL" },
+          400,
+        );
+      }
+      const { text } = c.req.valid("json");
+      try {
+        const draft = await extractRecipeFromText(text, null);
+        return c.json(draft);
+      } catch (err) {
+        const message =
+          err instanceof ImportError ? err.message : "Couldn't read that text";
         return c.json({ error: message }, 400);
       }
     },

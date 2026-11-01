@@ -86,16 +86,17 @@ export async function extractRecipeFromPhoto(
  * we know where the text came from.
  */
 export async function extractRecipeFromText(
-  html: string,
-  sourceUrl: string,
+  text: string,
+  sourceUrl: string | null,
 ): Promise<RecipeDraft> {
   const draft = await runGreenPt(greenPtHandler(), [
     {
       type: "text",
-      text: `Extract the recipe from this web page as JSON.\n\n${htmlToText(html)}`,
+      text: `Extract the recipe from this source as JSON.\n\n${htmlToText(text)}`,
     },
   ]);
-  // We know where the text came from — don't trust the model to echo it.
+  // Source URL is only set when we actually know it (URL import) — never
+  // trust the model to echo it.
   draft.sourceUrl = sourceUrl;
   return draft;
 }

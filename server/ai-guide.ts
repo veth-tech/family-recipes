@@ -47,6 +47,11 @@ every subsequent request. Check who you are with GET /api/me.
                                      the user for the details. Pages without
                                      schema.org data are fed to an AI model,
                                      which reads the recipe from the page text.
+    POST   /api/import/text         {"text": "…"} — raw recipe text the user
+                                     copied off a page (select-all + paste).
+                                     The AI model reads it and returns the
+                                     same DRAFT shape. Works for sites that
+                                     block automated fetching.
     POST   /api/import/photo         multipart/form-data, field "file" — a photo
                                      of a recipe (cookbook page, card,
                                      screenshot). A vision model reads it and

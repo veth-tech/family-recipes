@@ -13,6 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Tabs,
   TabsContent,
@@ -33,6 +34,9 @@ export default function NewRecipe() {
   const [photoBusy, setPhotoBusy] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [pasteText, setPasteText] = useState("");
+  const [pasteBusy, setPasteBusy] = useState(false);
+  const [pasteError, setPasteError] = useState<string | null>(null);
   const [draft, setDraft] = useState<RecipeDraft | null>(null);
 
   async function handleImport(event: React.FormEvent) {
@@ -66,6 +70,21 @@ export default function NewRecipe() {
       setPhotoError(err instanceof Error ? err.message : String(err));
     } finally {
       setPhotoBusy(false);
+    }
+  }
+
+  async function handlePasteImport(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!pasteText.trim()) return;
+    setPasteBusy(true);
+    setPasteError(null);
+    try {
+      const result = await api.importText(pasteText);
+      setDraft(result);
+    } catch (err) {
+      setPasteError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setPasteBusy(false);
     }
   }
 
@@ -137,9 +156,10 @@ export default function NewRecipe() {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="photo">
-            <TabsList className="mb-4 grid w-full grid-cols-2">
+            <TabsList className="mb-4 grid w-full grid-cols-3">
               <TabsTrigger value="photo">From a photo</TabsTrigger>
               <TabsTrigger value="url">From a URL</TabsTrigger>
+              <TabsTrigger value="text">Paste text</TabsTrigger>
             </TabsList>
 
             <TabsContent value="url">
@@ -189,6 +209,26 @@ export default function NewRecipe() {
                 </div>
                 {photoError && (
                   <p className="text-sm font-base text-[#FF4D50]">⚠️ {photoError}</p>
+                )}
+              </form>
+            </TabsContent>
+
+            <TabsContent value="text">
+              <form onSubmit={handlePasteImport} className="flex flex-col gap-3">
+                <Textarea
+                  value={pasteText}
+                  onChange={(event) => setPasteText(event.target.value)}
+                  rows={8}
+                  placeholder="Open the recipe page, select all (⌘A), copy, paste here…"
+                  required
+                />
+                <div className="flex justify-end">
+                  <Button type="submit" disabled={pasteBusy || !pasteText.trim()}>
+                    {pasteBusy ? "Parsing…" : "Parse"}
+                  </Button>
+                </div>
+                {pasteError && (
+                  <p className="text-sm font-base text-[#FF4D50]">⚠️ {pasteError}</p>
                 )}
               </form>
             </TabsContent>

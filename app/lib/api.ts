@@ -83,6 +83,12 @@ export const api = {
     });
   },
 
+  importText: (text: string) =>
+    request<RecipeDraft>("/api/import/text", {
+      method: "POST",
+      body: JSON.stringify({ text }),
+    }),
+
   addPhotoFromUrl: (recipeId: string, url: string) =>
     request<PhotoDTO>(`/api/recipes/${recipeId}/photos/from-url`, {
       method: "POST",
