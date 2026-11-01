@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
+import { Loader2 } from "lucide-react";
 
 import { RecipeForm } from "@/components/recipe-form";
 import { AppHeader } from "@/components/app-header";
@@ -24,6 +25,22 @@ import { api } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
 import type { RecipeDraft } from "../../server/services/import";
 import type { RecipeInput } from "../../server/services/recipes";
+
+/** Live "still working" label: spinner + elapsed seconds. Mounts fresh on each busy run. */
+function BusyLabel({ past }: { past: string }) {
+  const [secs, setSecs] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(() => setSecs((s) => s + 1), 1000);
+    return () => clearInterval(timer);
+  }, []);
+  return (
+    <span className="inline-flex items-center gap-1.5 tabular-nums">
+      <Loader2 className="size-4 animate-spin" aria-hidden />
+      {past}
+      <span className="opacity-70">· {secs}s</span>
+    </span>
+  );
+}
 
 export default function NewRecipe() {
   const navigate = useNavigate();
@@ -173,7 +190,7 @@ export default function NewRecipe() {
                     required
                   />
                   <Button type="submit" disabled={importBusy} className="shrink-0">
-                    {importBusy ? "Importing…" : "Import"}
+                    {importBusy ? <BusyLabel past="Importing" /> : "Import"}
                   </Button>
                 </div>
                 {importError && (
@@ -204,7 +221,7 @@ export default function NewRecipe() {
                     </span>
                   </label>
                   <Button type="submit" disabled={photoBusy} className="shrink-0">
-                    {photoBusy ? "Reading photo…" : "Extract"}
+                    {photoBusy ? <BusyLabel past="Reading photo" /> : "Extract"}
                   </Button>
                 </div>
                 {photoError && (
@@ -224,7 +241,7 @@ export default function NewRecipe() {
                 />
                 <div className="flex justify-end">
                   <Button type="submit" disabled={pasteBusy || !pasteText.trim()}>
-                    {pasteBusy ? "Parsing…" : "Parse"}
+                    {pasteBusy ? <BusyLabel past="Parsing" /> : "Parse"}
                   </Button>
                 </div>
                 {pasteError && (
