@@ -9,7 +9,7 @@ export function AppHeader() {
         to="/"
         className="text-xl font-heading no-underline text-foreground"
       >
-        🍳 Family Recipes
+        🌱 Family Recipes
       </Link>
       <UserMenu />
     </header>
