@@ -13,6 +13,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 import { api } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
 import type { RecipeDraft } from "../../server/services/import";
@@ -24,6 +30,9 @@ export default function NewRecipe() {
   const [importUrl, setImportUrl] = useState("");
   const [importBusy, setImportBusy] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
+  const [photoBusy, setPhotoBusy] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [draft, setDraft] = useState<RecipeDraft | null>(null);
 
   async function handleImport(event: React.FormEvent) {
@@ -34,6 +43,7 @@ export default function NewRecipe() {
     try {
       const result = await api.importFromUrl(importUrl.trim());
       setDraft(result);
+      setPhotoFile(null);
     } catch (err) {
       setImportError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -41,11 +51,32 @@ export default function NewRecipe() {
     }
   }
 
-  async function handleSave(input: RecipeInput, imageUrl: string | null) {
+  async function handlePhotoImport(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!photoFile) {
+      setPhotoError("Choose a photo first");
+      return;
+    }
+    setPhotoBusy(true);
+    setPhotoError(null);
+    try {
+      const result = await api.importPhoto(photoFile);
+      setDraft(result);
+    } catch (err) {
+      setPhotoError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setPhotoBusy(false);
+    }
+  }
+
+  async function handleSave(input: RecipeInput) {
     const recipe = await api.createRecipe(input);
-    if (imageUrl) {
+    if (draft?.imageUrl) {
       // Best effort: photo import failing shouldn't block the save
-      await api.addPhotoFromUrl(recipe.id, imageUrl).catch(() => {});
+      await api.addPhotoFromUrl(recipe.id, draft.imageUrl).catch(() => {});
+    } else if (photoFile) {
+      // The uploaded photo doubles as the recipe photo
+      await api.uploadPhotos(recipe.id, [photoFile]).catch(() => {});
     }
     navigate(`/recipes/${recipe.id}`);
   }
@@ -98,30 +129,70 @@ export default function NewRecipe() {
 
       <Card className="mb-8 bg-secondary-background">
         <CardHeader>
-          <CardTitle>Import from a URL</CardTitle>
+          <CardTitle>Import a recipe</CardTitle>
           <CardDescription>
-            Paste a recipe link — we pull the title, ingredients, instructions
-            and photo. You review everything before it's saved.
+            From a link or a photo — we pull the title, ingredients,
+            instructions and photo. You review everything before it's saved.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleImport} className="flex flex-col gap-3">
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <Input
-                type="url"
-                value={importUrl}
-                onChange={(event) => setImportUrl(event.target.value)}
-                placeholder="https://somegreatfoodblog.com/recipe…"
-                required
-              />
-              <Button type="submit" disabled={importBusy} className="shrink-0">
-                {importBusy ? "Importing…" : "Import"}
-              </Button>
-            </div>
-            {importError && (
-              <p className="text-sm font-base text-[#FF4D50]">⚠️ {importError}</p>
-            )}
-          </form>
+          <Tabs defaultValue="photo">
+            <TabsList className="mb-4 grid w-full grid-cols-2">
+              <TabsTrigger value="photo">From a photo</TabsTrigger>
+              <TabsTrigger value="url">From a URL</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="url">
+              <form onSubmit={handleImport} className="flex flex-col gap-3">
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Input
+                    type="url"
+                    value={importUrl}
+                    onChange={(event) => setImportUrl(event.target.value)}
+                    placeholder="https://somegreatfoodblog.com/recipe…"
+                    required
+                  />
+                  <Button type="submit" disabled={importBusy} className="shrink-0">
+                    {importBusy ? "Importing…" : "Import"}
+                  </Button>
+                </div>
+                {importError && (
+                  <p className="text-sm font-base text-[#FF4D50]">⚠️ {importError}</p>
+                )}
+              </form>
+            </TabsContent>
+
+            <TabsContent value="photo">
+              <form onSubmit={handlePhotoImport} className="flex flex-col gap-3">
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <label className="flex h-10 w-full cursor-pointer items-center gap-2 rounded-base border-2 border-border bg-secondary-background px-3 text-sm font-base text-foreground placeholder:text-foreground/50 focus-within:outline-hidden focus-within:ring-2 focus-within:ring-black focus-within:ring-offset-2">
+                    <span className="truncate text-foreground/50">
+                      {photoFile?.name ?? "No photo chosen"}
+                    </span>
+                    <input
+                      type="file"
+                      name="photo"
+                      accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
+                      className="sr-only"
+                      onChange={(event) => {
+                        setPhotoFile(event.target.files?.[0] ?? null);
+                        setPhotoError(null);
+                      }}
+                    />
+                    <span className="ml-auto inline-flex h-7 shrink-0 items-center rounded-sm border border-border bg-secondary-background px-2.5 text-sm font-heading">
+                      Browse
+                    </span>
+                  </label>
+                  <Button type="submit" disabled={photoBusy} className="shrink-0">
+                    {photoBusy ? "Reading photo…" : "Extract"}
+                  </Button>
+                </div>
+                {photoError && (
+                  <p className="text-sm font-base text-[#FF4D50]">⚠️ {photoError}</p>
+                )}
+              </form>
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
 
@@ -138,7 +209,7 @@ export default function NewRecipe() {
         initial={draftInitial}
         submitLabel={draft ? "Save recipe" : "Create recipe"}
         onSubmit={async (input) => {
-          await handleSave(input, draft?.imageUrl ?? null);
+          await handleSave(input);
         }}
         onCancel={() => navigate("/")}
       />

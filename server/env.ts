@@ -29,4 +29,12 @@ export const config = {
   secrets: {
     auth: required("BETTER_AUTH_SECRET"),
   },
+  // Photo → recipe extraction: greenPT via the Cline SDK (@cline/llms),
+  // spoken to as a plain OpenAI-compatible endpoint. Optional: the photo
+  // import route returns a friendly error until these are set.
+  greenPt: {
+    apiKey: process.env.GREENPT_API_KEY ?? "",
+    baseUrl: process.env.GREENPT_BASE_URL ?? "",
+    modelId: process.env.GREENPT_MODEL ?? "",
+  },
 };

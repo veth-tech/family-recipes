@@ -4,7 +4,6 @@ import { Link } from "react-router";
 
 import { RecipeCard } from "@/components/recipe-card";
 import { AppHeader } from "@/components/app-header";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api";
@@ -144,11 +143,6 @@ export default function Home() {
           )}
         </>
       )}
-
-      <p className="mt-10 text-center text-xs text-foreground/60">
-        <Badge variant="neutral">M3</Badge> notes &amp; photos are live — next
-        up: import recipes straight from a URL
-      </p>
     </main>
   );
 }

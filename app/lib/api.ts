@@ -74,6 +74,15 @@ export const api = {
       body: JSON.stringify({ url }),
     }),
 
+  importPhoto: (file: File) => {
+    const form = new FormData();
+    form.append("file", file);
+    return request<RecipeDraft>("/api/import/photo", {
+      method: "POST",
+      body: form,
+    });
+  },
+
   addPhotoFromUrl: (recipeId: string, url: string) =>
     request<PhotoDTO>(`/api/recipes/${recipeId}/photos/from-url`, {
       method: "POST",

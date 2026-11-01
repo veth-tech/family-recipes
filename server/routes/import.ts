@@ -1,10 +1,20 @@
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi";
 import { requireAuth, type AppEnv } from "../middleware";
 import { ImportError, importRecipeFromUrl } from "../services/import";
+import { extractRecipeFromPhoto, greenPtConfigured } from "../services/extract";
+import { MAX_PHOTO_BYTES } from "../services/photos";
 import * as photosService from "../services/photos";
 import { idParams } from "./schemas";
 
 const importUrlSchema = z.object({ url: z.string().url() });
+
+const PHOTO_MIME_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+  "image/avif",
+];
 
 const recipeDraftSchema = z.object({
   title: z.string().nullable(),
@@ -51,6 +61,65 @@ export function registerImportRoutes(app: OpenAPIHono<AppEnv>): void {
           err instanceof ImportError
             ? err.message
             : "Couldn't fetch that page";
+        return c.json({ error: message }, 400);
+      }
+    },
+  );
+
+  // Send a photo of a recipe (cookbook page, card, screenshot) to a vision
+  // model → review-only draft. Same flow as /api/import/url.
+  app.openapi(
+    createRoute({
+      method: "post",
+      path: "/api/import/photo",
+      tags: ["Import"],
+      middleware: [requireAuth],
+      request: {
+        body: {
+          content: {
+            "multipart/form-data": {
+              schema: z.object({ file: z.instanceof(File) }),
+            },
+          },
+          required: true,
+        },
+      },
+      responses: {
+        200: {
+          content: { "application/json": { schema: recipeDraftSchema } },
+          description: "Recipe draft (never saved — client shows it for review)",
+        },
+        400: { description: "Not a recipe / model or config error" },
+      },
+    }),
+    async (c) => {
+      if (!greenPtConfigured()) {
+        return c.json(
+          { error: "Photo import isn't configured — set GREENPT_API_KEY, GREENPT_BASE_URL and GREENPT_MODEL" },
+          400,
+        );
+      }
+      const { file } = c.req.valid("form");
+      const mime = file.type.split(";")[0].trim().toLowerCase();
+      if (!PHOTO_MIME_TYPES.includes(mime)) {
+        return c.json(
+          { error: `Unsupported image type: ${mime || "unknown"}` },
+          400,
+        );
+      }
+      const buffer = Buffer.from(await file.arrayBuffer());
+      if (buffer.length > MAX_PHOTO_BYTES) {
+        return c.json(
+          { error: `Image too large (max ${MAX_PHOTO_BYTES / 1024 / 1024} MB)` },
+          400,
+        );
+      }
+      try {
+        const draft = await extractRecipeFromPhoto(buffer, mime);
+        return c.json(draft);
+      } catch (err) {
+        const message =
+          err instanceof ImportError ? err.message : "Couldn't read that photo";
         return c.json({ error: message }, 400);
       }
     },

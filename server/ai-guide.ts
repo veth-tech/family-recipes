@@ -45,6 +45,11 @@ every subsequent request. Check who you are with GET /api/me.
                                      create via POST /api/recipes. Some sites
                                      block bots (403) — fall back to asking
                                      the user for the details.
+    POST   /api/import/photo         multipart/form-data, field "file" — a photo
+                                     of a recipe (cookbook page, card,
+                                     screenshot). A vision model reads it and
+                                     returns the same DRAFT shape. Review the
+                                     draft, then create via POST /api/recipes.
 
 ## 4. Photos
 
