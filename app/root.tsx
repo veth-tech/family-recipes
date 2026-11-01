@@ -45,7 +45,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {children}
         <footer className="mt-12 border-t-2 border-border px-4 py-6 text-center text-xs text-foreground/60">
           <p>
-            Made in Montana with <span aria-label="love">❤️</span>
+            Made with <span aria-label="love">❤️</span> and <span aria-label="robots">🤖</span> in Montana
           </p>
           <p className="mt-1">
             A private recipe library for our friends &amp; family — not a

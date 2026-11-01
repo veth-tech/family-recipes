@@ -44,7 +44,9 @@ every subsequent request. Check who you are with GET /api/me.
                                      It is NOT saved. Review the draft, then
                                      create via POST /api/recipes. Some sites
                                      block bots (403) — fall back to asking
-                                     the user for the details.
+                                     the user for the details. Pages without
+                                     schema.org data are fed to an AI model,
+                                     which reads the recipe from the page text.
     POST   /api/import/photo         multipart/form-data, field "file" — a photo
                                      of a recipe (cookbook page, card,
                                      screenshot). A vision model reads it and

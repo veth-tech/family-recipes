@@ -1,7 +1,10 @@
 /**
  * URL import: fetch a page, find its schema.org Recipe JSON-LD, and map it to
  * a draft. Drafts are never saved directly — the user reviews everything.
+ * Pages without schema.org data fall back to AI extraction (see ./extract).
  */
+
+import { extractRecipeFromText, greenPtConfigured } from "./extract";
 
 export class ImportError extends Error {}
 
@@ -253,15 +256,35 @@ function collectTags(node: Record<string, unknown>): string[] {
 // Main entry
 // ---------------------------------------------------------------------------
 
+/** og:image / twitter:image from meta tags — used when the AI path has no image. */
+function extractOgImage(html: string): string | null {
+  const patterns = [
+    /<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i,
+    /<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i,
+    /<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i,
+  ];
+  for (const re of patterns) {
+    const match = html.match(re);
+    if (match?.[1]) return match[1];
+  }
+  return null;
+}
+
 export async function importRecipeFromUrl(
   urlString: string,
 ): Promise<RecipeDraft> {
   const html = await fetchPage(urlString);
   const node = findRecipeNode(html);
   if (!node) {
-    throw new ImportError(
-      "No schema.org recipe data found on that page — it may need manual entry",
-    );
+    // No schema.org data — let the AI read the page text instead.
+    if (!greenPtConfigured()) {
+      throw new ImportError(
+        "No schema.org recipe data found on that page and AI fallback isn't configured",
+      );
+    }
+    const draft = await extractRecipeFromText(html, urlString);
+    if (!draft.imageUrl) draft.imageUrl = extractOgImage(html);
+    return draft;
   }
 
   const resolvedUrl = typeof node.url === "string" ? cleanText(node.url) : null;
