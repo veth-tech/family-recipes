@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 
+import { BusyLabel } from "@/components/busy-label";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api";
+import type { RecipeDraft } from "../../server/services/import";
 import type { RecipeInput } from "../../server/services/recipes";
 
 type Props = {
@@ -36,6 +38,9 @@ export function RecipeForm({ initial, submitLabel, onSubmit, onCancel }: Props) 
   const [allTags, setAllTags] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [fixPrompt, setFixPrompt] = useState("");
+  const [fixing, setFixing] = useState(false);
+  const [fixError, setFixError] = useState<string | null>(null);
 
   // Existing tags across the library — clickable chips under the input
   useEffect(() => {
@@ -59,6 +64,33 @@ export function RecipeForm({ initial, submitLabel, onSubmit, onCancel }: Props) 
 
   const numberOrNull = (value: string) =>
     value.trim() === "" ? null : Number(value);
+
+  /** Write an AI-returned draft back into the form, keeping what's absent. */
+  function applyDraft(draft: RecipeDraft) {
+    if (draft.title) setTitle(draft.title);
+    if (draft.description !== null) setDescription(draft.description);
+    if (draft.servings !== null) setServings(String(draft.servings));
+    if (draft.prepMinutes !== null) setPrepMinutes(String(draft.prepMinutes));
+    if (draft.cookMinutes !== null) setCookMinutes(String(draft.cookMinutes));
+    if (draft.ingredients) setIngredients(draft.ingredients);
+    if (draft.instructions) setInstructions(draft.instructions);
+    if (draft.tags.length > 0) setTagText(draft.tags.join(", "));
+  }
+
+  async function handleFix() {
+    if (!fixPrompt.trim()) return;
+    setFixing(true);
+    setFixError(null);
+    try {
+      const fixed = await api.fixRecipe(buildInput(), fixPrompt.trim());
+      applyDraft(fixed);
+      setFixPrompt("");
+    } catch (err) {
+      setFixError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setFixing(false);
+    }
+  }
 
   function buildInput(): RecipeInput {
     return {
@@ -197,6 +229,39 @@ export function RecipeForm({ initial, submitLabel, onSubmit, onCancel }: Props) 
       )}
 
       {error && <p className="font-base text-[#FF4D50]">⚠️ {error}</p>}
+
+      <div className="rounded-base border-2 border-dashed border-border p-4">
+        <span className="text-sm font-heading">Fix with AI</span>
+        <p className="mt-0.5 text-xs text-foreground/60">
+          Tell the model to clean up the recipe above — it rewrites the form
+          in place. e.g. &ldquo;remove the prices from the ingredients&rdquo;
+        </p>
+        <div className="mt-2.5 flex flex-col gap-2 sm:flex-row">
+          <Input
+            value={fixPrompt}
+            onChange={(e) => setFixPrompt(e.target.value)}
+            placeholder='e.g. "remove the prices from the ingredients"'
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                handleFix();
+              }
+            }}
+          />
+          <Button
+            type="button"
+            variant="neutral"
+            disabled={fixing || !fixPrompt.trim()}
+            onClick={handleFix}
+            className="shrink-0 disabled:opacity-100"
+          >
+            {fixing ? <BusyLabel past="Fixing" /> : "Apply fix"}
+          </Button>
+        </div>
+        {fixError && (
+          <p className="mt-2 text-sm font-base text-[#FF4D50]">⚠️ {fixError}</p>
+        )}
+      </div>
 
       <div className="flex gap-3">
         <Button type="submit" disabled={saving || !title.trim()}>

@@ -4,6 +4,7 @@ import { ImportError, importRecipeFromUrl } from "../services/import";
 import {
   extractRecipeFromPhoto,
   extractRecipeFromText,
+  fixRecipeWithPrompt,
   greenPtConfigured,
 } from "../services/extract";
 import { MAX_PHOTO_BYTES } from "../services/photos";
@@ -169,6 +170,61 @@ export function registerImportRoutes(app: OpenAPIHono<AppEnv>): void {
       } catch (err) {
         const message =
           err instanceof ImportError ? err.message : "Couldn't read that text";
+        return c.json({ error: message }, 400);
+      }
+    },
+  );
+
+  // Apply a free-text fix instruction to an in-progress recipe (e.g. "remove
+  // the prices from the ingredients"). Returns the full updated recipe.
+  const fixSchema = z.object({
+    prompt: z.string().min(1).max(2_000),
+    recipe: z.object({
+      title: z.string(),
+      description: z.string().nullable().optional(),
+      servings: z.number().nullable().optional(),
+      prepMinutes: z.number().nullable().optional(),
+      cookMinutes: z.number().nullable().optional(),
+      ingredients: z.string().optional(),
+      instructions: z.string().optional(),
+      tags: z.array(z.string()).optional(),
+    }),
+  });
+
+  app.openapi(
+    createRoute({
+      method: "post",
+      path: "/api/import/fix",
+      tags: ["Import"],
+      middleware: [requireAuth],
+      request: {
+        body: {
+          content: { "application/json": { schema: fixSchema } },
+          required: true,
+        },
+      },
+      responses: {
+        200: {
+          content: { "application/json": { schema: recipeDraftSchema } },
+          description: "Full updated recipe as a draft",
+        },
+        400: { description: "Model or config error" },
+      },
+    }),
+    async (c) => {
+      if (!greenPtConfigured()) {
+        return c.json(
+          { error: "AI fixes aren't configured — set GREENPT_API_KEY, GREENPT_BASE_URL and GREENPT_MODEL" },
+          400,
+        );
+      }
+      const { prompt, recipe } = c.req.valid("json");
+      try {
+        const fixed = await fixRecipeWithPrompt(recipe, prompt);
+        return c.json(fixed);
+      } catch (err) {
+        const message =
+          err instanceof ImportError ? err.message : "Couldn't apply that fix";
         return c.json({ error: message }, 400);
       }
     },

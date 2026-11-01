@@ -47,6 +47,12 @@ every subsequent request. Check who you are with GET /api/me.
                                      the user for the details. Pages without
                                      schema.org data are fed to an AI model,
                                      which reads the recipe from the page text.
+    POST   /api/import/fix          {"recipe": {...}, "prompt": "remove the
+                                     prices from the ingredients"} — applies a
+                                     free-text edit to an in-progress recipe
+                                     and returns the full updated one as a
+                                     DRAFT. Nothing is written to the library;
+                                     the client reviews it first.
     POST   /api/import/text         {"text": "…"} — raw recipe text the user
                                      copied off a page (select-all + paste).
                                      The AI model reads it and returns the

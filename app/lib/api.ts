@@ -89,6 +89,12 @@ export const api = {
       body: JSON.stringify({ text }),
     }),
 
+  fixRecipe: (recipe: RecipeInput, prompt: string) =>
+    request<RecipeDraft>("/api/import/fix", {
+      method: "POST",
+      body: JSON.stringify({ recipe, prompt }),
+    }),
+
   addPhotoFromUrl: (recipeId: string, url: string) =>
     request<PhotoDTO>(`/api/recipes/${recipeId}/photos/from-url`, {
       method: "POST",

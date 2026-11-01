@@ -46,8 +46,9 @@ function greenPtHandler(): ApiHandler {
 async function runGreenPt(
   handler: ApiHandler,
   content: ContentBlock[],
+  systemPrompt: string = SYSTEM_PROMPT,
 ): Promise<RecipeDraft> {
-  const stream = handler.createMessage(SYSTEM_PROMPT, [
+  const stream = handler.createMessage(systemPrompt, [
     { role: "user", content },
   ]);
 
@@ -132,6 +133,49 @@ function mapParsedToDraft(parsed: Record<string, unknown>): RecipeDraft {
 function stripFences(text: string): string {
   const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/);
   return (fenced ? fenced[1] : text).trim();
+}
+
+/**
+ * Apply a free-text edit instruction (e.g. "remove the prices from the
+ * ingredients") to a user's already-filled recipe. Returns the full updated
+ * recipe as a draft; the client decides what to overwrite.
+ */
+export async function fixRecipeWithPrompt(
+  recipe: {
+    title: string;
+    description?: string | null;
+    servings?: number | null;
+    prepMinutes?: number | null;
+    cookMinutes?: number | null;
+    ingredients?: string;
+    instructions?: string;
+    tags?: string[];
+  },
+  prompt: string,
+): Promise<RecipeDraft> {
+  return runGreenPt(
+    greenPtHandler(),
+    [
+      {
+        type: "text",
+        text: `Instruction: ${prompt}\n\nRecipe:\n${JSON.stringify(recipe, null, 2)}`,
+      },
+    ],
+    `You apply an edit instruction to a recipe. Reply with ONLY a JSON object (no markdown fences) containing the FULL updated recipe, shaped like:
+{
+  "title": string,
+  "description": string | null,
+  "servings": number | null,
+  "prepMinutes": number | null,
+  "cookMinutes": number | null,
+  "ingredients": string,
+  "instructions": string,
+  "tags": string[]
+}
+- ingredients: ONE INGREDIENT PER LINE.
+- instructions: markdown, numbered steps.
+Keep everything the instruction doesn't mention unchanged. If the instruction can't apply to this recipe, return the recipe unchanged.`,
+  );
 }
 
 /** Cheap HTML → text: drop scripts/styles/tags, decode the usual entities. */
