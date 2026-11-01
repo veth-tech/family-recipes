@@ -189,7 +189,11 @@ export default function NewRecipe() {
                     placeholder="https://somegreatfoodblog.com/recipe…"
                     required
                   />
-                  <Button type="submit" disabled={importBusy} className="shrink-0">
+                  <Button
+                    type="submit"
+                    disabled={importBusy}
+                    className="shrink-0 disabled:opacity-100"
+                  >
                     {importBusy ? <BusyLabel past="Importing" /> : "Import"}
                   </Button>
                 </div>
@@ -220,7 +224,11 @@ export default function NewRecipe() {
                       Browse
                     </span>
                   </label>
-                  <Button type="submit" disabled={photoBusy} className="shrink-0">
+                  <Button
+                    type="submit"
+                    disabled={photoBusy}
+                    className="shrink-0 disabled:opacity-100"
+                  >
                     {photoBusy ? <BusyLabel past="Reading photo" /> : "Extract"}
                   </Button>
                 </div>
@@ -240,7 +248,11 @@ export default function NewRecipe() {
                   required
                 />
                 <div className="flex justify-end">
-                  <Button type="submit" disabled={pasteBusy || !pasteText.trim()}>
+                  <Button
+                    type="submit"
+                    disabled={pasteBusy || !pasteText.trim()}
+                    className="disabled:opacity-100"
+                  >
                     {pasteBusy ? <BusyLabel past="Parsing" /> : "Parse"}
                   </Button>
                 </div>
